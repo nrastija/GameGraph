@@ -1,0 +1,63 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Environment variables
+.env
+.env.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Project specific
+data/cache/*
+!data/cache/.gitkeep
+data/exports/*
+!data/exports/.gitkeep
+logs/*
+!logs/.gitkeep
+static/graphs/*
+!static/graphs/.gitkeep
+
+# Temporary files
+tmp/
+*.tmp
+*.bak
+*.log
+
+# Neo4j
+*.db
+
+# Documentation build
+docs/latex/*.aux
+docs/latex/*.log
+docs/latex/*.out
+docs/latex/*.pdf
+docs/latex/*.toc
+docs/latex/*.synctex.gz
