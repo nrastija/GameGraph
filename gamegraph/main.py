@@ -1,5 +1,5 @@
-from nicegui import ui
+from ui.app import UIApp
 
-ui.label('Hello NiceGUI!')
+app = UIApp()
 
-ui.run()
+app.RunGUI()
