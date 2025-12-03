@@ -13,18 +13,9 @@ load_dotenv(dotenv_path=env_path)
 
 
 class RAWGClient:
-    """
-    Client for interacting with RAWG Video Games Database API
-    Documentation: https://api.rawg.io/docs/
-    """
 
     def __init__(self, api_key: str):
-        """
-        Initialize RAWG API client
 
-        Args:
-            api_key: RAWG API key
-        """
         self.api_key = api_key
         self.base_url = "https://api.rawg.io/api"
         self.session = requests.Session()
@@ -47,10 +38,41 @@ class RAWGClient:
             print(f"API Error: {e}")
             return {}
 
+    def get_creator_roles(self) -> List[Dict[str, Any]]:
+        data = self._make_request("creators")
+        return data.get("results", [])
+
+    def get_creators(self, _creatorID) -> List[Dict[str, Any]]:
+        data = self._make_request(f"creators/{_creatorID}")
+        return data.get("results", [])
+
+    def get_developers(self) -> List[Dict[str, Any]]:
+        data = self._make_request("developers")
+        return data.get("results", [])
+
+    def get_games(self) -> List[Dict[str, Any]]:
+        data = self._make_request("games")
+        return data.get("results", [])
+
     def get_genres(self) -> List[Dict[str, Any]]:
         data = self._make_request("genres")
         return data.get("results", [])
 
+    def get_platforms(self) -> List[Dict[str, Any]]:
+        data = self._make_request("platforms")
+        return data.get("results", [])
+
+    def get_publishers(self) -> List[Dict[str, Any]]:
+        data = self._make_request("publishers")
+        return data.get("results", [])
+
+    def get_stores(self) -> List[Dict[str, Any]]:
+        data = self._make_request("stores")
+        return data.get("results", [])
+
+    def get_tags(self) -> List[Dict[str, Any]]:
+        data = self._make_request("tags")
+        return data.get("results", [])
 
 rawg_client = RAWGClient(
     api_key=os.getenv("RAWG_API_KEY", "")
