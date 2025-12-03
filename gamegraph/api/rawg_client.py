@@ -4,7 +4,7 @@ RAWG API Client for fetching game data
 from pathlib import Path
 
 import requests
-from typing import Dict, Optional, Any
+from typing import Dict, Optional, Any, List
 import os
 from dotenv import load_dotenv
 
@@ -47,6 +47,9 @@ class RAWGClient:
             print(f"API Error: {e}")
             return {}
 
+    def get_genres(self) -> List[Dict[str, Any]]:
+        data = self._make_request("genres")
+        return data.get("results", [])
 
 
 rawg_client = RAWGClient(
