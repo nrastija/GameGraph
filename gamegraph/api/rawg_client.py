@@ -44,7 +44,7 @@ class RAWGClient:
 
     def get_creators(self, _creatorID) -> List[Dict[str, Any]]:
         data = self._make_request(f"creators/{_creatorID}")
-        return data.get("results", [])
+        return data if data else []
 
     def get_developers(self) -> List[Dict[str, Any]]:
         data = self._make_request("developers")
