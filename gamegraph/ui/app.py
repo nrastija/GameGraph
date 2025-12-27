@@ -1,23 +1,67 @@
-from nicegui import ui, App
-from ui.pages.RootPage import RootPage
-from ui.pages.InfoPage import InfoPage
+from pathlib import Path
+
+from nicegui import ui, App, app
+
 
 class UIApp(App):
-    app_name = 'GameGraph'
+    def __init__(self):
+        self.app_name = "GameGraph"
+        self.app_description = "Project: Video Game Discovery Through Neo4J Graph Database"
+        self.primary_color = '#1976D2'
+        self.secondary_color = '#424242'
+        self.setup_routes()
+        self.setup_static_files()
+
 
     def setup_routes(self):
+        from ui.pages import (
+            HomePage,
+            BrowsePage,
+            SearchPage,
+            RecommendationsPage,
+            DevelopersPage,
+            AnalyticsPage,
+            InfoPage
+        )
+
         @ui.page('/')
         def root_page():
-            RootPage(200, 100)
+            HomePage.home_page()
+
+        @ui.page('/browse')
+        def browse_page():
+            BrowsePage.browse_page()
+
+        @ui.page('/search')
+        def search_page():
+            SearchPage.search_page()
+
+        @ui.page('/recommendations')
+        def recommendations_page():
+            RecommendationsPage
+
+        @ui.page('/developers')
+        def developers_page():
+            DevelopersPage
+
+        @ui.page('/analytics')
+        def analytics_page():
+            AnalyticsPage
 
         @ui.page('/info')
         def info_page():
-            InfoPage(200, 100)
+            InfoPage.info_page()
+
+    def setup_static_files(self):
+        static_dir = Path(__file__).parent.parent.parent / 'static'
+        app.add_static_files('/static', static_dir)
 
     def RunGUI(self):
-        self.setup_routes()
         ui.run(
             title=self.app_name,
             port=8080,
-            show=True
+            host='0.0.0.0',
+            reload=True,
+            show=True,
+            favicon='🎮' # emoji
         )
