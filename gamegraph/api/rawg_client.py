@@ -50,9 +50,17 @@ class RAWGClient:
         data = self._make_request("developers")
         return data.get("results", [])
 
-    def get_games(self) -> List[Dict[str, Any]]:
-        data = self._make_request("games")
-        return data.get("results", [])
+    def get_games(self, page: int = 1, page_size: int = 20, ordering: str = '-rating') -> List[Dict[str, Any]]:
+        params = {
+            "page": page,
+            "page_size": min(page_size, 40),
+            "ordering": ordering
+        }
+        return self._make_request("games", params)
+
+    def get_game(self, gameID) -> Dict[str, Any]:
+        data = self._make_request(f"games/{gameID}")
+        return data if data else {}
 
     def get_genres(self) -> List[Dict[str, Any]]:
         data = self._make_request("genres")
