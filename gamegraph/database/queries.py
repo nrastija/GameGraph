@@ -205,6 +205,19 @@ class GameQueries:
         result = db.execute_query(query, {"game_id": game_id})
         return result[0] if result else None
 
+    @staticmethod
+    def get_games_by_genders():
+        genres_query = """
+                    MATCH (g:Genre)<-[:HAS_GENRE]-(game:Game)
+                    WITH g.name as genre, COUNT(game) as game_count
+                    WHERE game_count > 0
+                    RETURN genre, game_count
+                    ORDER BY game_count DESC
+                    LIMIT 12
+                    """
+
+        genres = db.execute_query(genres_query)
+        return genres
 
 class DeveloperQueries:
     """Queries specific to developers"""
