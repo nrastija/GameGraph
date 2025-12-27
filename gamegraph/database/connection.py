@@ -77,6 +77,16 @@ class Neo4JConnection:
             print(f"Error while getting database info: {e}")
             return {"nodes": 0, "relationships": 0}
 
+    def verify_connectivity(self) -> bool:
+        try:
+            with self.driver.session() as session:
+                result = session.run("RETURN 1 AS num")
+                record = result.single()
+                return record["num"] == 1
+        except Exception as e:
+            print(f"Connection verification failed: {e}")
+            return False
+
 db = Neo4JConnection(
     uri=os.getenv("NEO4J_URI", "bolt://localhost:7687"),
     username=os.getenv("NEO4J_USERNAME", "neo4j"),
