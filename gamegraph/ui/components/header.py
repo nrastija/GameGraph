@@ -11,6 +11,5 @@ def create_header():
             ui.link('Browse', '/browse').classes('text-white hover:text-blue-200')
             ui.link('Search', '/search').classes('text-white hover:text-blue-200')
             ui.link('Recommendations', '/recommendations').classes('text-white hover:text-blue-200')
-            ui.link('Developers', '/developers').classes('text-white hover:text-blue-200')
             ui.link('Analytics', '/analytics').classes('text-white hover:text-blue-200')
             ui.link('Info', '/info').classes('text-white hover:text-blue-200')

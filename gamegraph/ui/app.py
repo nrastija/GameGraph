@@ -19,7 +19,6 @@ class UIApp(App):
             BrowsePage,
             SearchPage,
             RecommendationsPage,
-            DevelopersPage,
             AnalyticsPage,
             InfoPage
         )
@@ -38,15 +37,11 @@ class UIApp(App):
 
         @ui.page('/recommendations')
         def recommendations_page():
-            RecommendationsPage
-
-        @ui.page('/developers')
-        def developers_page():
-            DevelopersPage
+            RecommendationsPage.reccomendation_page()
 
         @ui.page('/analytics')
         def analytics_page():
-            AnalyticsPage
+            AnalyticsPage.analytic_page()
 
         @ui.page('/info')
         def info_page():
