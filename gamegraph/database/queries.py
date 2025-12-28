@@ -268,13 +268,15 @@ class RecommenderQueries:
              collect(DISTINCT id(st)) as similar_tags
 
         WITH source_name, similar,
-             source_genres, source_tags,
-             similar_genres, similar_tags,
-             size([g IN source_genres WHERE g IN similar_genres]) as shared_genre_count,
-             size([t IN source_tags WHERE t IN similar_tags]) as shared_tag_count
+         source_genres, source_tags,           
+         similar_genres, similar_tags,         
+         size([g IN source_genres WHERE g IN similar_genres]) as shared_genre_count,
+         size([t IN source_tags WHERE t IN similar_tags]) as shared_tag_count
 
         // Jaccard similarity
         WITH source_name, similar,
+             source_genres, similar_genres,        
+             source_tags, similar_tags, 
              shared_genre_count,
              shared_tag_count,
              CASE 
@@ -322,8 +324,8 @@ class RecommenderQueries:
                similar.released as released,
                similar.background_image as image,
                similar.metacritic as metacritic,
-               shared_genre_count,  // ✅ Return counts
-               shared_tag_count,    // ✅ Return counts
+               shared_genre_count,  
+               shared_tag_count,    
                same_dev,
                is_franchise,
                ROUND(similarity * 100) as similarity_percentage

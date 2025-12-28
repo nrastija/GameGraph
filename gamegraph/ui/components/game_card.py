@@ -1,6 +1,3 @@
-"""
-Game card component for displaying game information
-"""
 
 from nicegui import ui
 from typing import Dict, Any
