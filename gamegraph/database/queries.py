@@ -248,76 +248,156 @@ class RecommenderQueries:
     @staticmethod
     def get_similar_games(game_id: int, limit: int = 10) -> List[Dict[str, Any]]:
         query = """
-                MATCH (source:Game {id: $game_id})
+        MATCH (source:Game {id: $game_id})
 
-                MATCH (source)-[:HAS_GENRE]->(genre:Genre)<-[:HAS_GENRE]-(similar:Game) //Genre match
-                WHERE source <> similar
+        OPTIONAL MATCH (source)-[:HAS_GENRE]->(g:Genre)
+        OPTIONAL MATCH (source)-[:HAS_TAG]->(t:Tag)
+        WITH source, 
+             source.name as source_name,
+             collect(DISTINCT id(g)) as source_genres,
+             collect(DISTINCT id(t)) as source_tags
 
-                WITH similar, COUNT(DISTINCT genre) as shared_genres
+        MATCH (similar:Game)
+        WHERE similar <> source
 
-                OPTIONAL MATCH (source:Game {id: $game_id})-[:HAS_TAG]->(tag:Tag)<-[:HAS_TAG]-(similar) //Tag match
-                WITH similar, shared_genres, COUNT(DISTINCT tag) as shared_tags
+        OPTIONAL MATCH (similar)-[:HAS_GENRE]->(sg:Genre)
+        OPTIONAL MATCH (similar)-[:HAS_TAG]->(st:Tag)
+        WITH source_name, similar,
+             source_genres, source_tags,
+             collect(DISTINCT id(sg)) as similar_genres,
+             collect(DISTINCT id(st)) as similar_tags
 
-                OPTIONAL MATCH (source:Game {id: $game_id})-[:DEVELOPED_BY]->(dev:Developer)<-[:DEVELOPED_BY]-(similar) //Developer match if possible
-                WITH similar, shared_genres, shared_tags, 
-                     CASE WHEN dev IS NOT NULL THEN 1 ELSE 0 END as same_developer
+        WITH source_name, similar,
+             source_genres, source_tags,
+             similar_genres, similar_tags,
+             size([g IN source_genres WHERE g IN similar_genres]) as shared_genre_count,
+             size([t IN source_tags WHERE t IN similar_tags]) as shared_tag_count
 
-                // Calculate similarity score (weighted)
-                WITH similar,
-                     shared_genres,
-                     shared_tags,
-                     same_developer,
-                     (shared_genres * 3.0 + shared_tags * 2.0 + same_developer * 5.0) as similarity_score
+        // Jaccard similarity
+        WITH source_name, similar,
+             shared_genre_count,
+             shared_tag_count,
+             CASE 
+                WHEN size(source_genres) = 0 OR size(similar_genres) = 0 THEN 0.0
+                ELSE toFloat(shared_genre_count) / 
+                     toFloat(size(source_genres + [g IN similar_genres WHERE NOT g IN source_genres]))
+             END as genre_jaccard,
+             CASE 
+                WHEN size(source_tags) = 0 OR size(similar_tags) = 0 THEN 0.0
+                ELSE toFloat(shared_tag_count) / 
+                     toFloat(size(source_tags + [t IN similar_tags WHERE NOT t IN source_tags]))
+             END as tag_jaccard
 
-                RETURN similar.id as id,
-                       similar.name as name,
-                       similar.rating as rating,
-                       similar.released as released,
-                       similar.background_image as image,
-                       similar.metacritic as metacritic,
-                       shared_genres,
-                       shared_tags,
-                       same_developer,
-                       similarity_score
-                ORDER BY similarity_score DESC, similar.rating DESC
-                LIMIT $limit
-                """
+        OPTIONAL MATCH (source:Game {id: $game_id})-[:DEVELOPED_BY]->(dev:Developer)<-[:DEVELOPED_BY]-(similar)
+
+        WITH similar,
+             shared_genre_count,
+             shared_tag_count,
+             genre_jaccard,
+             tag_jaccard,
+             CASE WHEN dev IS NOT NULL THEN 1 ELSE 0 END as same_dev,
+             CASE 
+                WHEN toLower(similar.name) CONTAINS toLower(split(source_name, ':')[0])
+                THEN 1 ELSE 0
+             END as is_franchise
+
+        WITH similar,
+             shared_genre_count,
+             shared_tag_count,
+             genre_jaccard,
+             tag_jaccard,
+             same_dev,
+             is_franchise,
+             CASE 
+                WHEN is_franchise = 1 
+                THEN 0.95
+                ELSE (genre_jaccard * 0.5 + tag_jaccard * 0.3 + same_dev * 0.2)
+             END as similarity
+
+        WHERE similarity > 0.1
+
+        RETURN similar.id as id,
+               similar.name as name,
+               similar.rating as rating,
+               similar.released as released,
+               similar.background_image as image,
+               similar.metacritic as metacritic,
+               shared_genre_count,  // ✅ Return counts
+               shared_tag_count,    // ✅ Return counts
+               same_dev,
+               is_franchise,
+               ROUND(similarity * 100) as similarity_percentage
+        ORDER BY similarity DESC, similar.rating DESC
+        LIMIT $limit
+        """
 
         return db.execute_query(query, {"game_id": game_id, "limit": limit})
 
     @staticmethod
     def get_recommendations_for_multiple_games(game_ids: List[int], limit: int = 10) -> List[Dict[str, Any]]:
         query = """
-            MATCH (liked:Game) WHERE liked.id IN $game_ids
-            MATCH (liked)-[:HAS_GENRE]->(genre:Genre)
+        MATCH (liked:Game) WHERE liked.id IN $game_ids
+        OPTIONAL MATCH (liked)-[:HAS_GENRE]->(g:Genre)
+        OPTIONAL MATCH (liked)-[:HAS_TAG]->(t:Tag)
+        WITH collect(DISTINCT id(g)) as liked_genres,
+             collect(DISTINCT id(t)) as liked_tags,
+             collect(DISTINCT liked) as liked_games
 
-            MATCH (genre)<-[:HAS_GENRE]-(recommended:Game)
-            WHERE NOT recommended.id IN $game_ids
+        MATCH (recommended:Game)
+        WHERE NOT recommended.id IN $game_ids
 
-            WITH recommended, 
-                 COUNT(DISTINCT genre) as genre_matches
+        OPTIONAL MATCH (recommended)-[:HAS_GENRE]->(rg:Genre)
+        OPTIONAL MATCH (recommended)-[:HAS_TAG]->(rt:Tag)
+        WITH recommended,
+             liked_genres,
+             liked_tags,
+             collect(DISTINCT id(rg)) as rec_genres,
+             collect(DISTINCT id(rt)) as rec_tags
 
-            MATCH (liked:Game) WHERE liked.id IN $game_ids
-            MATCH (liked)-[:HAS_TAG]->(tag:Tag)
-            OPTIONAL MATCH (tag)<-[:HAS_TAG]-(recommended)
+        WITH recommended,
+             size([g IN liked_genres WHERE g IN rec_genres]) as shared_genre_count,
+             size([t IN liked_tags WHERE t IN rec_tags]) as shared_tag_count,
+             liked_genres,
+             liked_tags,
+             rec_genres,
+             rec_tags
 
-            WITH recommended, 
-                 genre_matches,
-                 COUNT(DISTINCT tag) as tag_matches,
-                 (genre_matches * 3.0 + COUNT(DISTINCT tag) * 2.0) as match_score
+        // Jaccard similarity
+        WITH recommended,
+             shared_genre_count,
+             shared_tag_count,
+             CASE 
+                WHEN size(liked_genres) = 0 OR size(rec_genres) = 0 THEN 0.0
+                ELSE toFloat(shared_genre_count) / 
+                     toFloat(size(liked_genres + [g IN rec_genres WHERE NOT g IN liked_genres]))
+             END as genre_jaccard,
+             CASE 
+                WHEN size(liked_tags) = 0 OR size(rec_tags) = 0 THEN 0.0
+                ELSE toFloat(shared_tag_count) / 
+                     toFloat(size(liked_tags + [t IN rec_tags WHERE NOT t IN liked_tags]))
+             END as tag_jaccard
 
-            RETURN recommended.id as id,
-                   recommended.name as name,
-                   recommended.rating as rating,
-                   recommended.released as released,
-                   recommended.background_image as image,
-                   recommended.metacritic as metacritic,
-                   genre_matches,
-                   tag_matches,
-                   match_score
-            ORDER BY match_score DESC, recommended.rating DESC
-            LIMIT $limit
-            """
+        WITH recommended,
+             shared_genre_count,
+             shared_tag_count,
+             genre_jaccard,
+             tag_jaccard,
+             (genre_jaccard * 0.6 + tag_jaccard * 0.4) as similarity
+
+        WHERE similarity > 0.15
+
+        RETURN recommended.id as id,
+               recommended.name as name,
+               recommended.rating as rating,
+               recommended.released as released,
+               recommended.background_image as image,
+               recommended.metacritic as metacritic,
+               shared_genre_count,
+               shared_tag_count,
+               ROUND(similarity * 100) as similarity_percentage
+        ORDER BY similarity DESC, recommended.rating DESC
+        LIMIT $limit
+        """
 
         return db.execute_query(query, {"game_ids": game_ids, "limit": limit})
 
