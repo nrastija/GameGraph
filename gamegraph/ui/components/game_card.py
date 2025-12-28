@@ -30,15 +30,30 @@ def create_game_card(game: Dict[str, Any], show_similarity: bool = False):
             else:
                 ui.label(f"Release date not specified").classes('text-sm text-gray-600 mt-1')
 
+            if show_similarity:
+                if game.get('similarity_percentage'):
+                    percentage = game['similarity_percentage']
+                    ui.label(f"{percentage}% Match").classes('text-sm text-green-600 font-semibold mt-2')
 
-            if show_similarity and game.get('similarity_score'):
-                score = game['similarity_score']
-                ui.label(f"Match: {score:.0f}%").classes('text-sm text-green-600 font-semibold mt-2')
+                match_details = []
 
-                if game.get('shared_genres'):
-                    ui.label(f"• {game['shared_genres']} shared genres").classes('text-xs text-gray-500')
-                if game.get('shared_tags'):
-                    ui.label(f"• {game['shared_tags']} shared tags").classes('text-xs text-gray-500')
+                if game.get('shared_genre_count') and game['shared_genre_count'] > 0:
+                    count = game['shared_genre_count']
+                    match_details.append(f"{count} shared genre{'s' if count > 1 else ''}")
+
+                if game.get('shared_tag_count') and game['shared_tag_count'] > 0:
+                    count = game['shared_tag_count']
+                    match_details.append(f"{count} shared tag{'s' if count > 1 else ''}")
+
+                if game.get('same_dev') and game['same_dev'] == 1:
+                    match_details.append("same developer")
+
+                if game.get('is_franchise') and game['is_franchise'] == 1:
+                    match_details.append("same franchise")
+
+                if match_details:
+                    for detail in match_details:
+                        ui.label(f"• {detail}").classes('text-xs text-gray-500')
 
         with ui.card_actions().classes('mt-auto'):
             ui.button('View Details',
