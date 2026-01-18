@@ -20,7 +20,7 @@ class UIApp(App):
             SearchPage,
             RecommendationsPage,
             AnalyticsPage,
-            InfoPage
+            GameDetailsPage
         )
 
         @ui.page('/')
@@ -43,9 +43,9 @@ class UIApp(App):
         def analytics_page():
             AnalyticsPage.analytic_page()
 
-        @ui.page('/info')
-        def info_page():
-            InfoPage.info_page()
+        @ui.page('/game/{game_id}')
+        def game_details_page(game_id: int):
+            GameDetailsPage.game_details_page(game_id)
 
     def setup_static_files(self):
         static_dir = Path(__file__).parent.parent.parent / 'static'
