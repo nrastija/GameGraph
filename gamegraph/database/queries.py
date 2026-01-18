@@ -178,29 +178,38 @@ class GameQueries:
     @staticmethod
     def get_game_details_with_relationships(game_id: int) -> Optional[Dict[str, Any]]:
         query = """
-            MATCH (g:Game {id: $game_id})
+        MATCH (g:Game {id: $game_id})
 
-            OPTIONAL MATCH (g)-[:HAS_GENRE]->(genre:Genre)
-            OPTIONAL MATCH (g)-[:AVAILABLE_ON]->(platform:Platform)
-            OPTIONAL MATCH (g)-[:DEVELOPED_BY]->(dev:Developer)
-            OPTIONAL MATCH (g)-[:PUBLISHED_BY]->(pub:Publisher)
-            OPTIONAL MATCH (g)-[:HAS_TAG]->(tag:Tag)
+        OPTIONAL MATCH (g)-[:HAS_GENRE]->(genre:Genre)
+        WITH g, collect(DISTINCT genre.name) as genres
 
-            RETURN g.id as id,
-                   g.name as name,
-                   g.slug as slug,
-                   g.rating as rating,
-                   g.rating_top as rating_top,
-                   g.released as released,
-                   g.metacritic as metacritic,
-                   g.playtime as playtime,
-                   g.background_image as image,
-                   collect(DISTINCT genre.name) as genres,
-                   collect(DISTINCT platform.name) as platforms,
-                   collect(DISTINCT dev.name) as developers,
-                   collect(DISTINCT pub.name) as publishers,
-                   collect(DISTINCT tag.name) as tags
-            """
+        OPTIONAL MATCH (g)-[:AVAILABLE_ON]->(platform:Platform)
+        WITH g, genres, collect(DISTINCT platform.name) as platforms
+
+        OPTIONAL MATCH (g)-[:DEVELOPED_BY]->(dev:Developer)
+        WITH g, genres, platforms, collect(DISTINCT dev.name) as developers
+
+        OPTIONAL MATCH (g)-[:PUBLISHED_BY]->(pub:Publisher)
+        WITH g, genres, platforms, developers, collect(DISTINCT pub.name) as publishers
+
+        OPTIONAL MATCH (g)-[:HAS_TAG]->(tag:Tag)
+        WITH g, genres, platforms, developers, publishers, collect(DISTINCT tag.name) as tags
+
+        RETURN g.id as id,
+               g.name as name,
+               g.slug as slug,
+               g.rating as rating,
+               g.rating_top as rating_top,
+               g.released as released,
+               g.metacritic as metacritic,
+               g.playtime as playtime,
+               g.background_image as image,
+               genres,
+               platforms,
+               developers,
+               publishers,
+               tags
+        """
 
         result = db.execute_query(query, {"game_id": game_id})
         return result[0] if result else None
@@ -402,6 +411,37 @@ class RecommenderQueries:
         """
 
         return db.execute_query(query, {"game_ids": game_ids, "limit": limit})
+
+    @staticmethod
+    def get_recommendations_for_genres(genres: List[str], limit: int = 20, min_rating: float = 4.0) -> List[
+        Dict[str, Any]]:
+        query = """
+        MATCH (g:Game)-[:HAS_GENRE]->(genre:Genre)
+        WHERE genre.name IN $genres
+          AND g.rating >= $min_rating
+
+        WITH g, COUNT(DISTINCT genre) as genre_match_count,
+             $num_genres as total_selected
+
+        RETURN g.id as id,
+               g.name as name,
+               g.rating as rating,
+               g.released as released,
+               g.background_image as image,
+               g.metacritic as metacritic,
+               genre_match_count,
+               total_selected,
+               ROUND((toFloat(genre_match_count) / total_selected) * 100) as genre_match_percentage
+        ORDER BY genre_match_count DESC, g.rating DESC
+        LIMIT $limit
+        """
+
+        return db.execute_query(query, {
+            "genres": genres,
+            "num_genres": len(genres),
+            "min_rating": min_rating,
+            "limit": limit
+        })
 
     @staticmethod
     def get_top_rated_games(limit: int = 20, min_rating: float = 4.0) -> List[Dict[str, Any]]:
