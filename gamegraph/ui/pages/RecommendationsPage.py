@@ -1,7 +1,7 @@
 
 from nicegui import ui
 
-from database import RecommenderQueries
+from database import RecommenderQueries, db
 from ui.components.game_card import create_game_card
 from ui.components.header import create_header
 
@@ -92,8 +92,47 @@ def reccomendation_page():
 
         # Method 3
         with ui.card().classes('w-full'):
-            with ui.row().classes('w-full items-center gap-4 mb-4 p-4 rounded'):
-                ui.label('Method 3: Genre-Based!').classes('text-h5 font-bold')
+            with ui.row().classes('w-full items-center gap-4 mb-4 p-4 bg-purple-50 rounded'):
+                ui.icon('category', size='lg').classes('text-purple-600')
+                ui.label('Method 3: Genre-Based Discovery').classes('text-h5 font-bold')
+
+            ui.label('Select genres you enjoy and discover top-rated games').classes('text-gray-600 mb-4')
+
+            genres_query = """
+            MATCH (g:Genre)<-[:HAS_GENRE]-(game:Game)
+            WITH g.name as genre, COUNT(game) as game_count
+            WHERE game_count > 0
+            RETURN genre, game_count
+            ORDER BY genre ASC
+            """
+
+            genres_data = db.execute_query(genres_query)
+
+            selected_genres = []
+
+            with ui.row().classes('gap-3 flex-wrap mb-6'):
+                for genre_data in genres_data:
+                    genre_name = genre_data['genre']
+                    count = genre_data['game_count']
+
+                    chip = ui.chip(
+                        f"{genre_name} ({count})",
+                        on_click=lambda g=genre_name: toggle_genre(
+                            g,
+                            selected_genres,
+                            genre_display_3,
+                            genre_recommendations_3
+                        )
+                    ).props('clickable outlined color=purple')
+
+            with ui.card().classes('w-full bg-purple-50 p-4 mb-4'):
+                ui.label('Selected Genres:').classes('font-semibold mb-2')
+                genre_display_3 = ui.row().classes('gap-2 flex-wrap')
+
+                with genre_display_3:
+                    ui.label('No genres selected yet').classes('text-gray-500 italic')
+
+            genre_recommendations_3 = ui.column().classes('w-full mt-6')
 
 
 # Method 1
@@ -399,6 +438,83 @@ def show_multi_game_recommendations(selected_games, recommendations_container):
                 ui.label('No recommendations found').classes('text-h6 text-gray-600')
                 ui.label('Try selecting different games').classes('text-sm text-gray-500')
 
+# Method 3
+def toggle_genre(genre_name, selected_list, display_container, recommendations_container):
+    if genre_name in selected_list:
+        selected_list.remove(genre_name)
+        ui.notify(f'Removed: {genre_name}', type='info')
+    else:
+        if len(selected_list) >= 5:
+            ui.notify('Maximum 5 genres allowed', type='warning')
+            return
 
+        selected_list.append(genre_name)
+        ui.notify(f'Added: {genre_name}', type='positive')
+
+    update_genre_display(selected_list, display_container)
+
+    if selected_list:
+        show_genre_recommendations(selected_list, recommendations_container)
+    else:
+        recommendations_container.clear()
+
+
+def update_genre_display(selected_list, display_container):
+
+    display_container.clear()
+
+    with display_container:
+        if not selected_list:
+            ui.label('No genres selected yet').classes('text-gray-500 italic')
+        else:
+            for genre in selected_list:
+                with ui.chip(genre, icon='check').props('color=purple removable'):
+                    pass
+
+
+def show_genre_recommendations(genres, recommendations_container):
+    recommendations_container.clear()
+
+    with recommendations_container:
+        ui.separator().classes('my-6')
+
+        with ui.card().classes('w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white p-6'):
+            ui.icon('category', size='lg').classes('mb-2')
+            ui.label(f'🎯 Top Games in Selected Genres').classes('text-h5 font-bold')
+
+            with ui.row().classes('gap-2 flex-wrap mt-3'):
+                for genre in genres:
+                    with ui.chip(genre, icon='check').props('color=white text-color=purple'):
+                        pass
+
+    recommendations = RecommenderQueries.get_recommendations_for_genres(genres, limit=20)
+
+    recommendations_container.clear()
+
+    with recommendations_container:
+        ui.separator().classes('my-6')
+
+        with ui.card().classes('w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white p-6'):
+            ui.icon('category', size='lg').classes('mb-2')
+            ui.label(f'🎯 Top Games in Selected Genres').classes('text-h5 font-bold')
+
+            with ui.row().classes('gap-2 flex-wrap mt-3'):
+                for genre in genres:
+                    with ui.chip(genre, icon='check').props('color=white text-color=purple'):
+                        pass
+
+        if recommendations:
+            ui.label(f'Found {len(recommendations)} top-rated games').classes('text-lg font-semibold mt-6 mb-2')
+            ui.label(f'Showing games that match at least one of your selected genres').classes(
+                'text-sm text-gray-600 mb-4')
+
+            with ui.row().classes('gap-4 flex-wrap'):
+                for rec_game in recommendations:
+                    create_game_card(rec_game, show_genre_match=True)
+        else:
+            with ui.column().classes('w-full items-center p-12 gap-4'):
+                ui.icon('search_off', size='xl').classes('text-gray-400')
+                ui.label('No games found').classes('text-h6 text-gray-600')
+                ui.label('Try selecting different genres').classes('text-sm text-gray-500')
 
 
