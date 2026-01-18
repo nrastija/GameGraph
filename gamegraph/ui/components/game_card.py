@@ -3,7 +3,7 @@ from nicegui import ui
 from typing import Dict, Any
 
 
-def create_game_card(game: Dict[str, Any], show_similarity: bool = False):
+def create_game_card(game: Dict[str, Any], show_similarity: bool = False, show_genre_match: bool = False):
     with ui.card().classes('w-64 h-96 cursor-pointer hover:shadow-lg transition-shadow'):
         if game.get('image'):
             ui.image(game['image']).classes('w-full h-36 object-cover')
@@ -13,6 +13,20 @@ def create_game_card(game: Dict[str, Any], show_similarity: bool = False):
 
         with ui.card_section():
             ui.label(game.get('name', 'Unknown')).classes('text-lg font-bold line-clamp-2')
+
+            if show_genre_match and game.get('genre_match_count') and game.get('total_selected'):
+                match_count = game['genre_match_count']
+                total = game['total_selected']
+
+                if match_count == total:
+                    color_class = 'text-green-600 bg-green-50'
+                elif match_count >= total * 0.66:
+                    color_class = 'text-blue-600 bg-blue-50'
+                else:
+                    color_class = 'text-yellow-600 bg-purple-50'
+
+                with ui.row().classes(f'items-center gap-1 px-2 py-1 rounded {color_class} mt-2'):
+                    ui.label(f'{match_count}/{total} genres').classes('text-xs font-semibold')
 
             rating = game.get('rating', 0)
             with ui.row().classes('items-center gap-2 mt-2'):
