@@ -43,7 +43,7 @@ class Neo4JConnection:
             print(f"Query execution failed: {e}")
             raise
 
-    def execute_write(self, query: str, parameters: Optional[Dict] = None) -> List[Dict[str, Any]]:
+    def execute_write(self, query: str, parameters: Optional[Dict] = None) -> None:
         try:
             with self.driver.session() as session:
                 session.run(query, parameters or {})
