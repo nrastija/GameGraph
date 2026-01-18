@@ -507,30 +507,3 @@ class RecommenderQueries:
             "days": days,
             "limit": limit
         })
-
-    @staticmethod
-    def get_hidden_gems(max_playtime: int = 20, min_rating: float = 4.2, limit: int = 20) -> List[Dict[str, Any]]:
-        #  highly rated games with shorter playtime
-
-        query = """
-            MATCH (g:Game)
-            WHERE g.playtime <= $max_playtime
-              AND g.rating >= $min_rating
-              AND g.playtime > 0
-
-            RETURN g.id as id,
-                   g.name as name,
-                   g.rating as rating,
-                   g.playtime as playtime,
-                   g.released as released,
-                   g.background_image as image,
-                   g.metacritic as metacritic
-            ORDER BY g.rating DESC, g.playtime ASC
-            LIMIT $limit
-            """
-
-        return db.execute_query(query, {
-            "max_playtime": max_playtime,
-            "min_rating": min_rating,
-            "limit": limit
-        })

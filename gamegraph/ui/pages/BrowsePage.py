@@ -110,10 +110,8 @@ def load_games(
             icon='chevron_left'
         ).props('flat').set_enabled(current_page['value'] > 1)
 
-        # Page info
         ui.label(f'Page {current_page["value"]} of {total_pages}').classes('text-lg font-semibold mx-4')
 
-        # Next button
         ui.button(
             'Next',
             on_click=lambda: change_page(

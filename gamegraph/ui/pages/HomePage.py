@@ -42,13 +42,11 @@ def home_page():
                         genre_name = genre_data['genre']
                         count = genre_data['game_count']
 
-                        # Genre card
                         with ui.card().classes('cursor-pointer hover:shadow-lg transition-shadow'):
                             with ui.card_section().classes('text-center p-4'):
                                 ui.label(genre_name).classes('text-lg font-bold')
                                 ui.label(f'{count} games').classes('text-sm text-gray-600')
 
-                            # Click handler
                             ui.button('Explore',
                                       on_click=lambda g=genre_name: ui.navigate.to(f'/browse?genre={g}')
                                       ).classes('w-full').props('flat')

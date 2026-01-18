@@ -104,5 +104,5 @@ def game_details_page(game_id: int):
                     ui.label('Tags').classes('text-h5 font-bold')
 
                 with ui.row().classes('gap-2 flex-wrap'):
-                    for tag in game['tags'][:20]:  # Limit to first 20 tags
+                    for tag in game['tags'][:20]:  # 20 Tags
                         ui.chip(tag).props('size=sm outline')

@@ -9,7 +9,6 @@ def search_page():
         with ui.card().classes('w-full max-w-7xl mx-auto p-8 gap-8'):
             ui.label('Find Your Game').classes('text-h5 mb-4')
 
-            # Search input
             search_container = ui.column().classes('w-full')
 
             with search_container:
@@ -17,12 +16,10 @@ def search_page():
                     placeholder='Search by game name (e.g., "Witcher", "Portal")...',
                 ).classes('w-full').props('clearable')
 
-                # Search button
                 ui.button('Search',
                           on_click=lambda: perform_search(search_input.value, search_results)
                           ).classes('mt-2')
 
-                # Search results
                 search_results = ui.column().classes('w-full mt-4')
 
     with ui.footer().classes('bg-gray-800 text-white p-4'):

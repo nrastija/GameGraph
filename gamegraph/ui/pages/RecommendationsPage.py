@@ -22,8 +22,6 @@ def reccomendation_page():
 
             ui.label('Type a game name to search and find similar recommendations').classes('text-gray-600 mb-4')
 
-            autocomplete_options = {'value': []}
-
             search_input = ui.input(
                 placeholder='Start typing a game name (e.g., "Witcher", "Portal", "Zelda")...',
             ).classes('w-full').props('clearable outlined')
@@ -223,7 +221,6 @@ def show_selected_game(game, container, selected_game_state, similar_container):
                             if game.get('released'):
                                 ui.label(f"Released: {game['released']}").classes('text-gray-600')
 
-                # Change selection button
                 ui.button(
                     'Change Selection',
                     on_click=lambda: clear_selection(selected_game_state, container, similar_container),
