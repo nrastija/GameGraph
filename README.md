@@ -64,7 +64,7 @@ cd gamegraph
 
 ### 2. Instalacija potrebnih ovisnosti:
 ```bash
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 ```
 
 ### 3. Konfiguracija varijabli okoline
