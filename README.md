@@ -67,9 +67,19 @@ cd gamegraph
 python -m pip install -r requirements.txt
 ```
 
+Ako ste u virtualnom okruženju ovo neće raditi te je potrebno postaviti virtualenv na sljedeći način:
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+cd ..
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
+Sad ste instalirali pakete i u venv environmentu možete pokrenuti main.py, no potrebno je postaviti .env.py
+
 ### 3. Konfiguracija varijabli okoline
 
-U korijenu projekta potrebno je kreirati datoteku .env.py sa sljedećim sadržajem:
+U korijenu projekta potrebno je **kreirati datoteku .env.py** sa sljedećim sadržajem:
 
 ```text
 NEO4J_URI=bolt://localhost:7687
@@ -81,6 +91,7 @@ RAWG_API_KEY=your_rawg_api_key
 DEBUG=True
 LOG_LEVEL=INFO
 ```
+Projekt sadrži dokument .env.example.py koji sadrži prikaz kako datoteka .env.py treba izgledati.
 
 ### 4. Pokretanje sustava
 
